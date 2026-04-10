@@ -1,7 +1,7 @@
 # F1 Tracker
 
 Projet personnel pour afficher le calendrier des courses de F1, le détail des sessions et un live timing.
-Proejt inbspiré de F1 live timing
+Projet inspiré de F1 live timing
 
 ## Fonctionnalités
 - Sélection de saison :white_check_mark:
