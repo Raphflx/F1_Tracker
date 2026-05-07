@@ -1,0 +1,4 @@
+# Bloquer tout accès HTTP direct aux fichiers d'includes
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>

@@ -35,7 +35,8 @@ try {
 } catch (Throwable $e) {
     $meetings = [];
     $sessions = [];
-    $errorMessage = $e->getMessage();
+    error_log('[F1Tracker] calendar.php : ' . $e->getMessage());
+    $errorMessage = 'Impossible de charger les données. Veuillez réessayer plus tard.';
 }
 
 // Index sessions -> plage week-end par meeting_key
@@ -79,7 +80,7 @@ foreach ($sessions as $session) {
 
 <?php if (!empty($errorMessage ?? null)): ?>
   <p class="error">
-    Impossible de charger les données OpenF1. Détail : <?= htmlspecialchars($errorMessage, ENT_QUOTES) ?>
+    <?= htmlspecialchars($errorMessage, ENT_QUOTES) ?>
   </p>
 <?php endif; ?>
 

@@ -58,7 +58,8 @@ try {
         $years = [2025];
     }
 } catch (Throwable $e) {
-    $errorMessage = $e->getMessage();
+    error_log('[F1Tracker] calendar_year.php : ' . $e->getMessage());
+    $errorMessage = 'Impossible de charger la liste des saisons. Veuillez réessayer plus tard.';
     // Fallback minimal (site reste utilisable)
     $years = [2025];
 }
@@ -74,10 +75,7 @@ try {
 </p>
 
 <?php if ($errorMessage): ?>
-  <p class="error">
-    ⚠️ Impossible de charger la liste des saisons automatiquement (OpenF1).
-    Détail : <?= htmlspecialchars($errorMessage, ENT_QUOTES) ?>
-  </p>
+  <p class="error"><?= htmlspecialchars($errorMessage, ENT_QUOTES) ?></p>
 <?php endif; ?>
 
 <section class="calendar-grid">

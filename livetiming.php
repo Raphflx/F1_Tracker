@@ -79,7 +79,8 @@ try {
 
     $focusSession = pick_focus_session($sessions, new DateTime('now', new DateTimeZone('Europe/Paris')));
 } catch (Throwable $e) {
-    $errorMessage = $e->getMessage();
+    error_log('[F1Tracker] livetiming.php (sessions) : ' . $e->getMessage());
+    $errorMessage = 'Impossible de charger les sessions. Veuillez réessayer plus tard.';
 }
 
 // ---------------------------------------------------------
@@ -112,8 +113,8 @@ if ($focusSession && isset($focusSession['meeting_key'], $focusSession['session_
             '&date>=' . urlencode($sinceIso)
         );
     } catch (Throwable $e) {
-        // On ne bloque pas toute la page si une partie rate
-        $errorMessage = $errorMessage ?: $e->getMessage();
+        error_log('[F1Tracker] livetiming.php (météo/race_control) : ' . $e->getMessage());
+        $errorMessage = $errorMessage ?: 'Impossible de charger les données temps réel. Veuillez réessayer plus tard.';
     }
 }
 

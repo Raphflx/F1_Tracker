@@ -41,7 +41,8 @@ try {
 
     $sessions = openf1_get('sessions?meeting_key=' . urlencode((string)$meetingKey));
 } catch (Throwable $e) {
-    $errorMessage = $e->getMessage();
+    error_log('[F1Tracker] grandprix.php : ' . $e->getMessage());
+    $errorMessage = 'Impossible de charger les données du Grand Prix. Veuillez réessayer plus tard.';
 }
 
 // Tri des sessions par date de début (UTC)

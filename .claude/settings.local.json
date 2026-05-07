@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\rapha\\\\OneDrive\\\\Bureau\\\\Code\\\\F1_Tracker\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Find \"c:\\\\Users\\\\rapha\\\\OneDrive\\\\Bureau\\\\Code\\\\F1_Tracker\" -name \".htaccess\" -o -name \"*.htaccess\")"
+    ]
+  }
+}

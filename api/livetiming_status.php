@@ -62,7 +62,8 @@ try {
         'totalLaps'        => $totalLaps,
     ]);
 } catch (Throwable $e) {
+    error_log('[F1Tracker] api/livetiming_status.php : ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Erreur interne du serveur.']);
 }
 
