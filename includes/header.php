@@ -10,8 +10,17 @@ declare(strict_types=1);
 | - Évite toute duplication HTML dans les pages PHP
 */
 
-// Si la page définit un titre, on l’utilise, sinon titre par défaut
-$title = $pageTitle ?? 'F1 Tracker';
+$title = $pageTitle ?? ‘F1 Tracker’;
+
+// Détecte la section active pour la nav (peut être surchargée par $navSection)
+$_currentPage = basename($_SERVER[‘PHP_SELF’] ?? ‘’);
+$_navSection  = $navSection ?? $_currentPage;
+if (in_array($_currentPage, [‘calendar.php’, ‘grandprix.php’], true)) {
+    $_navSection = ‘calendar_year.php’;
+}
+function nav_active(string $page, string $section): string {
+    return $page === $section ? ‘ class="active" aria-current="page"’ : ‘’;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -35,10 +44,10 @@ $title = $pageTitle ?? 'F1 Tracker';
 
   <!-- Navigation principale -->
   <nav>
-    <a href="index.php">Accueil</a>
-    <a href="calendar.php">Calendrier 2025</a>
-    <a href="livetiming.php">Live timing</a>
-    <a href="credits.php">Crédits</a>
+    <a href="index.php"<?= nav_active('index.php', $_navSection) ?>>Accueil</a>
+    <a href="calendar_year.php"<?= nav_active('calendar_year.php', $_navSection) ?>>Calendriers</a>
+    <a href="livetiming.php"<?= nav_active('livetiming.php', $_navSection) ?>>Live timing</a>
+    <a href="credits.php"<?= nav_active('credits.php', $_navSection) ?>>Crédits</a>
   </nav>
 </header>
 

@@ -131,6 +131,12 @@ nav a:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
+nav a.active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+}
+
 /* Responsive header */
 @media (max-width: 720px) {
   header {
@@ -348,6 +354,11 @@ a.secondary-btn:hover {
 /* -------------------------
    9) TABLES
    ------------------------- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 table,
 .livetiming-table {
   width: 100%;

@@ -70,7 +70,7 @@ foreach ($sessions as $session) {
 }
 ?>
 
-<button class="back-btn" onclick="window.location.href='index.php'">← Retour à l’accueil</button>
+<a class="back-btn" href="index.php">← Retour à l’accueil</a>
 
 <h2>Calendrier des Grands Prix <?= (int)$year ?></h2>
 <p class="section-subtitle">
@@ -118,11 +118,9 @@ foreach ($sessions as $session) {
       ?>
 
       <a class="race-card" href="<?= htmlspecialchars($href, ENT_QUOTES) ?>">
-        <div class="race-card-content">
-          <h3><?= htmlspecialchars($country, ENT_QUOTES) ?></h3>
-          <p class="race-circuit"><?= htmlspecialchars($circuit, ENT_QUOTES) ?></p>
-          <p class="race-date"><?= htmlspecialchars($weekendText, ENT_QUOTES) ?></p>
-        </div>
+        <h3><?= htmlspecialchars($country, ENT_QUOTES) ?></h3>
+        <p class="race-circuit"><?= htmlspecialchars($circuit, ENT_QUOTES) ?></p>
+        <p class="race-date"><?= htmlspecialchars($weekendText, ENT_QUOTES) ?></p>
       </a>
 
     <?php endforeach; ?>

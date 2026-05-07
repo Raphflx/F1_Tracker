@@ -5,6 +5,15 @@ declare(strict_types=1);
  * Helpers texte (URLs, affichage, etc.)
  */
 
+function day_en_to_fr(string $dayEn): string
+{
+    static $map = [
+        'Monday' => 'lundi', 'Tuesday' => 'mardi', 'Wednesday' => 'mercredi',
+        'Thursday' => 'jeudi', 'Friday' => 'vendredi', 'Saturday' => 'samedi', 'Sunday' => 'dimanche',
+    ];
+    return $map[$dayEn] ?? $dayEn;
+}
+
 function slugify(string $str): string
 {
     // Enlève les accents

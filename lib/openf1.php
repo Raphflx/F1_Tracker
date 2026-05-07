@@ -42,3 +42,36 @@ function openf1_get(string $pathAndQuery, int $timeoutSeconds = 8): array
 
     return $data;
 }
+
+// --- Helpers de traitement des données OpenF1 ---
+
+function track_status_from_race_control(array $raceControl): array
+{
+    if (empty($raceControl)) return ['Clair', 'track-status--green'];
+
+    usort($raceControl, static fn($a, $b) =>
+        strtotime((string)($a['date'] ?? '')) <=> strtotime((string)($b['date'] ?? ''))
+    );
+    $last = $raceControl[count($raceControl) - 1];
+
+    $category = strtoupper((string)($last['category'] ?? ''));
+    $flag     = strtoupper((string)($last['flag'] ?? ''));
+    $message  = strtoupper((string)($last['message'] ?? ''));
+
+    if ($category === 'SAFETYCAR' || str_contains($message, 'SAFETY CAR')) return ['Safety Car', 'track-status--yellow'];
+    if (str_contains($flag, 'RED')    || str_contains($message, 'RED FLAG'))  return ['Drapeau rouge', 'track-status--red'];
+    if (str_contains($flag, 'YELLOW'))                                         return ['Drapeau jaune', 'track-status--yellow'];
+    if (str_contains($flag, 'GREEN'))                                          return ['Clair', 'track-status--green'];
+
+    return ['Clair', 'track-status--green'];
+}
+
+function current_lap_from_race_control(array $raceControl): ?int
+{
+    $max = null;
+    foreach ($raceControl as $e) {
+        $n = (int)($e['lap_number'] ?? 0);
+        if ($n > 0 && ($max === null || $n > $max)) $max = $n;
+    }
+    return $max;
+}

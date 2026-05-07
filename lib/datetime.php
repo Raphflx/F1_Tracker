@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/text.php';
+
 /**
  * Helpers date/heure
  */
@@ -33,6 +35,11 @@ function utc_to_local_with_offset(DateTime $utc, int $offsetMinutes): DateTime
     $local->modify($prefix . $offsetMinutes . ' minutes');
 
     return $local;
+}
+
+function format_date_fr(DateTime $dt): string
+{
+    return day_en_to_fr($dt->format('l')) . ' ' . $dt->format('d/m/Y H:i');
 }
 
 function format_weekend_range(DateTime $start, DateTime $end): string

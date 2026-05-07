@@ -14,24 +14,6 @@ require __DIR__ . '/lib/openf1.php';
 require __DIR__ . '/lib/text.php';
 require __DIR__ . '/lib/datetime.php';
 
-/**
- * Convertit un jour anglais ("Monday") en français ("lundi").
- */
-function day_en_to_fr(string $dayEn): string
-{
-    static $map = [
-        'Monday' => 'lundi',
-        'Tuesday' => 'mardi',
-        'Wednesday' => 'mercredi',
-        'Thursday' => 'jeudi',
-        'Friday' => 'vendredi',
-        'Saturday' => 'samedi',
-        'Sunday' => 'dimanche',
-    ];
-
-    return $map[$dayEn] ?? $dayEn;
-}
-
 // ----------------------
 // 1) Paramètre d’entrée
 // ----------------------
@@ -107,7 +89,7 @@ if (!empty($sessions)) {
 }
 ?>
 
-<button class="back-btn" onclick="window.location.href='calendar_year.php'">← Retour au calendrier</button>
+<a class="back-btn" href="calendar_year.php">← Retour au calendrier</a>
 
 <?php if ($errorMessage): ?>
   <p class="error"><?= htmlspecialchars($errorMessage, ENT_QUOTES) ?></p>
@@ -151,6 +133,7 @@ if (!empty($sessions)) {
     <div class="gp-detail-right">
       <h3>Programme du week-end</h3>
 
+      <div class="table-scroll">
       <table id="sessions-table">
         <thead>
           <tr>
@@ -203,6 +186,7 @@ if (!empty($sessions)) {
           <?php endif; ?>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 

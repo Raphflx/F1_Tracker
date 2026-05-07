@@ -12,6 +12,7 @@ declare(strict_types=1);
 */
 
 require __DIR__ . '/lib/openf1.php';
+require __DIR__ . '/lib/text.php';
 require __DIR__ . '/lib/datetime.php';
 
 date_default_timezone_set('Europe/Paris');
@@ -22,20 +23,8 @@ require __DIR__ . '/includes/header.php';
 $YEAR = 2025;
 
 // ---------------------------------------------------------
-// Helpers simples (affichage)
+// Helpers locaux (logique propre à cette page)
 // ---------------------------------------------------------
-function format_date_fr(DateTime $dt): string
-{
-    static $jours = [
-        'Monday' => 'lundi', 'Tuesday' => 'mardi', 'Wednesday' => 'mercredi',
-        'Thursday' => 'jeudi', 'Friday' => 'vendredi', 'Saturday' => 'samedi', 'Sunday' => 'dimanche',
-    ];
-
-    $dayEn = $dt->format('l');
-    $dayFr = $jours[$dayEn] ?? $dayEn;
-    return $dayFr . ' ' . $dt->format('d/m/Y H:i');
-}
-
 function pick_focus_session(array $sessions, DateTime $nowParis): ?array
 {
     // Priorité :
@@ -72,63 +61,6 @@ function pick_focus_session(array $sessions, DateTime $nowParis): ?array
     }
 
     return $live ?? $next ?? $last;
-}
-
-function track_status_from_race_control(array $raceControl): array
-{
-    // Retourne : [label, cssClass]
-    // Par défaut
-    $label = 'Clair';
-    $css = 'track-status--green';
-
-    if (empty($raceControl)) {
-        return [$label, $css];
-    }
-
-    // On prend l'event le plus récent (date max)
-    usort($raceControl, static function (array $a, array $b): int {
-        return strtotime((string)($a['date'] ?? '1970-01-01')) <=> strtotime((string)($b['date'] ?? '1970-01-01'));
-    });
-    $last = $raceControl[count($raceControl) - 1];
-
-    $category = strtoupper((string)($last['category'] ?? ''));
-    $flag     = strtoupper((string)($last['flag'] ?? ''));
-    $message  = strtoupper((string)($last['message'] ?? ''));
-
-    // Safety Car
-    if ($category === 'SAFETYCAR' || str_contains($message, 'SAFETY CAR')) {
-        return ['Safety Car', 'track-status--yellow'];
-    }
-
-    // Rouge
-    if (str_contains($flag, 'RED') || str_contains($message, 'RED FLAG')) {
-        return ['Drapeau rouge', 'track-status--red'];
-    }
-
-    // Jaune
-    if (str_contains($flag, 'YELLOW')) {
-        return ['Drapeau jaune', 'track-status--yellow'];
-    }
-
-    // Vert
-    if (str_contains($flag, 'GREEN')) {
-        return ['Clair', 'track-status--green'];
-    }
-
-    return [$label, $css];
-}
-
-function current_lap_from_race_control(array $raceControl): ?int
-{
-    $max = null;
-    foreach ($raceControl as $e) {
-        if (!isset($e['lap_number'])) continue;
-        $n = (int)$e['lap_number'];
-        if ($n > 0 && ($max === null || $n > $max)) {
-            $max = $n;
-        }
-    }
-    return $max;
 }
 
 // ---------------------------------------------------------
@@ -234,7 +166,7 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
 
 ?>
 
-<button class="back-btn" onclick="window.location.href='index.php'">← Retour à l’accueil</button>
+<a class="back-btn" href="index.php">← Retour à l’accueil</a>
 
 <?php if ($errorMessage): ?>
   <p class="error">⚠️ <?= htmlspecialchars($errorMessage, ENT_QUOTES) ?></p>
@@ -279,13 +211,13 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
   <div class="livetiming-banner-right">
     <div class="livetiming-metric">
       <span class="label">Tours</span>
-      <span class="value"><?= htmlspecialchars($lapsText, ENT_QUOTES) ?></span>
+      <span class="value" id="lt-laps"><?= htmlspecialchars($lapsText, ENT_QUOTES) ?></span>
     </div>
 
     <div class="livetiming-metric">
       <span class="label">Piste</span>
       <span class="value">
-        <span class="track-status-badge <?= htmlspecialchars($trackStatusClass, ENT_QUOTES) ?>">
+        <span id="lt-track-status" class="track-status-badge <?= htmlspecialchars($trackStatusClass, ENT_QUOTES) ?>">
           <?= htmlspecialchars($trackStatusLabel, ENT_QUOTES) ?>
         </span>
       </span>
@@ -293,22 +225,22 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
 
     <div class="livetiming-metric">
       <span class="label">Track</span>
-      <span class="value"><?= htmlspecialchars($trackTempText, ENT_QUOTES) ?></span>
+      <span class="value" id="lt-track-temp"><?= htmlspecialchars($trackTempText, ENT_QUOTES) ?></span>
     </div>
 
     <div class="livetiming-metric">
       <span class="label">Air</span>
-      <span class="value"><?= htmlspecialchars($airTempText, ENT_QUOTES) ?></span>
+      <span class="value" id="lt-air-temp"><?= htmlspecialchars($airTempText, ENT_QUOTES) ?></span>
     </div>
 
     <div class="livetiming-metric">
       <span class="label">Humidité</span>
-      <span class="value"><?= htmlspecialchars($humidityText, ENT_QUOTES) ?></span>
+      <span class="value" id="lt-humidity"><?= htmlspecialchars($humidityText, ENT_QUOTES) ?></span>
     </div>
 
     <div class="livetiming-metric">
       <span class="label">Vent</span>
-      <span class="value"><?= htmlspecialchars($windText, ENT_QUOTES) ?></span>
+      <span class="value" id="lt-wind"><?= htmlspecialchars($windText, ENT_QUOTES) ?></span>
     </div>
   </div>
 </div>
@@ -321,12 +253,16 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
     data-phase="<?= htmlspecialchars($phase, ENT_QUOTES) ?>"
     data-start="<?= $startParis ? (string)$startParis->getTimestamp() : '0' ?>"
     data-end="<?= $endParis ? (string)$endParis->getTimestamp() : '0' ?>"
+    data-session-key="<?= $focusSession ? (int)$focusSession['session_key'] : '0' ?>"
   >
     Chargement…
   </div>
 </div>
 
 <script src="script/countdown.js"></script>
+<?php if ($phase !== 'finished' && $focusSession): ?>
+<script src="script/livetiming.js"></script>
+<?php endif; ?>
 
 <?php
 require __DIR__ . '/includes/footer.php';

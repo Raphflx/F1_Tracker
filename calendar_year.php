@@ -83,11 +83,9 @@ try {
 <section class="calendar-grid">
   <?php foreach ($years as $year): ?>
     <a class="race-card" href="calendar.php?year=<?= (int)$year ?>">
-      <div class="race-card-content">
-        <h3>Saison <?= (int)$year ?></h3>
-        <p class="race-circuit">Championnat du monde de Formule 1</p>
-        <p class="race-date">Voir le calendrier →</p>
-      </div>
+      <h3>Saison <?= (int)$year ?></h3>
+      <p class="race-circuit">Championnat du monde de Formule 1</p>
+      <p class="race-date">Voir le calendrier →</p>
     </a>
   <?php endforeach; ?>
 </section>
