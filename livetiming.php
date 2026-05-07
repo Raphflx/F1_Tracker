@@ -326,58 +326,7 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
   </div>
 </div>
 
-<script>
-(function () {
-  const el = document.getElementById('livetiming-countdown');
-  if (!el) return;
-
-  const startTs = parseInt(el.dataset.start, 10) * 1000;
-  const endTs   = parseInt(el.dataset.end, 10) * 1000;
-  let phase     = el.dataset.phase || 'finished';
-
-  function formatDuration(ms) {
-    if (ms <= 0) return '0s';
-
-    const totalSeconds = Math.floor(ms / 1000);
-
-    const days = Math.floor(totalSeconds / (24 * 3600));
-    const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const parts = [];
-    if (days > 0) parts.push(days + 'j');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    if (minutes > 0 || hours > 0 || days > 0) parts.push(minutes + 'min');
-    parts.push(seconds + 's');
-
-    return parts.join(' ');
-  }
-
-  function tick() {
-    const now = Date.now();
-
-    if (startTs === 0 || endTs === 0) {
-      el.textContent = 'Temps indisponible';
-      return;
-    }
-
-    if (now < startTs) {
-      phase = 'upcoming';
-      el.textContent = 'Début dans ' + formatDuration(startTs - now);
-    } else if (now <= endTs) {
-      phase = 'live';
-      el.textContent = 'En cours – fin dans ' + formatDuration(endTs - now);
-    } else {
-      phase = 'finished';
-      el.textContent = 'Session terminée';
-    }
-  }
-
-  tick();
-  setInterval(tick, 1000);
-})();
-</script>
+<script src="script/countdown.js"></script>
 
 <?php
 require __DIR__ . '/includes/footer.php';

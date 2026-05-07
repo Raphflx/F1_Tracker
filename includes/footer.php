@@ -40,5 +40,6 @@ declare(strict_types=1);
   </p>
 </footer>
 
+<script src="script/script.js"></script>
 </body>
 </html>
