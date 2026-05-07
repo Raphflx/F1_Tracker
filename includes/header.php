@@ -10,16 +10,16 @@ declare(strict_types=1);
 | - Évite toute duplication HTML dans les pages PHP
 */
 
-$title = $pageTitle ?? ‘F1 Tracker’;
+$title = $pageTitle ?? 'F1 Tracker';
 
 // Détecte la section active pour la nav (peut être surchargée par $navSection)
-$_currentPage = basename($_SERVER[‘PHP_SELF’] ?? ‘’);
+$_currentPage = basename($_SERVER['PHP_SELF'] ?? '');
 $_navSection  = $navSection ?? $_currentPage;
-if (in_array($_currentPage, [‘calendar.php’, ‘grandprix.php’], true)) {
-    $_navSection = ‘calendar_year.php’;
+if (in_array($_currentPage, ['calendar.php', 'grandprix.php'], true)) {
+    $_navSection = 'calendar_year.php';
 }
 function nav_active(string $page, string $section): string {
-    return $page === $section ? ‘ class="active" aria-current="page"’ : ‘’;
+    return $page === $section ? ' class="active" aria-current="page"' : '';
 }
 ?>
 <!DOCTYPE html>
