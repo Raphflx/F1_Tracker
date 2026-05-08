@@ -75,3 +75,39 @@ function current_lap_from_race_control(array $raceControl): ?int
     }
     return $max;
 }
+
+/**
+ * Détermine la session "focus" parmi une liste triée chronologiquement.
+ * Priorité : live > prochaine à venir > dernière passée.
+ */
+function pick_focus_session(array $sessions, DateTime $nowParis): ?array
+{
+    $nowUtc = clone $nowParis;
+    $nowUtc->setTimezone(new DateTimeZone('UTC'));
+
+    $live = null;
+    $next = null;
+    $last = null;
+
+    foreach ($sessions as $s) {
+        if (empty($s['date_start']) || empty($s['date_end'])) continue;
+
+        $start = new DateTime((string)$s['date_start'], new DateTimeZone('UTC'));
+        $end   = new DateTime((string)$s['date_end'],   new DateTimeZone('UTC'));
+
+        if ($start <= $nowUtc && $nowUtc <= $end) {
+            $live = $s;
+            break;
+        }
+        if ($start > $nowUtc) {
+            if ($next === null || new DateTime((string)$next['date_start'], new DateTimeZone('UTC')) > $start) {
+                $next = $s;
+            }
+        }
+        if ($end < $nowUtc) {
+            $last = $s;
+        }
+    }
+
+    return $live ?? $next ?? $last;
+}

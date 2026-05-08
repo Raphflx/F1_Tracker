@@ -20,8 +20,10 @@
     try {
       const res = await fetch('api/livetiming_status.php?session_key=' + sessionKey);
       if (!res.ok) return;
-      const d = await res.json();
-      if (d.error) return;
+      const json = await res.json();
+      if (json.error || !json.data) return;
+
+      const d = json.data;
 
       if (elTrackTemp)   elTrackTemp.textContent   = fmt(d.trackTemp, '°C');
       if (elAirTemp)     elAirTemp.textContent      = fmt(d.airTemp, '°C');
@@ -34,8 +36,8 @@
       }
 
       if (elLaps) {
-        const current = d.currentLap  ?? '—';
-        const total   = d.totalLaps   ?? '—';
+        const current = d.currentLap ?? '—';
+        const total   = d.totalLaps  ?? '—';
         elLaps.textContent = current + '/' + total;
       }
     } catch (_) {
@@ -43,6 +45,5 @@
     }
   }
 
-  // Premier refresh après 30s, puis toutes les 30s
   setInterval(refresh, 30_000);
 })();

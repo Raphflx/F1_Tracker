@@ -87,3 +87,10 @@ F1_Tracker/
 - L'API utilisée est **OpenF1** (open-source, gratuite) — documentation : https://openf1.org
 - Les données de session, météo, positions et timing viennent toutes de cette API.
 - Ce projet est personnel et non commercial.
+
+## Sécurité
+
+- Aucune information sensible en clair dans le code autre que celle voulue (nom, prénom).
+- Pas de clé d'API en clair — utiliser un fichier .env ou un fichier de config exclu du dépôt.
+- Modifier le .gitignore si nécessaire pour protéger les fichiers sensibles.
+- Analyser, corriger et éviter les failles de sécurité (XSS, injections, exposition de données, etc.).
