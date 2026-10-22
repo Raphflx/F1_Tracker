@@ -31,9 +31,14 @@ function openf1_get(string $pathAndQuery, int $timeoutSeconds = 8): array
 
     $raw = @file_get_contents($url, false, $context);
 
-    // Statut HTTP (si dispo)
-    $statusLine = $http_response_header[0] ?? '';
-    $isHttpOk = str_contains($statusLine, '200');
+    // Statut HTTP de la dernière réponse (après redirections éventuelles).
+    // http_get_last_response_headers() remplace $http_response_header (déprécié en PHP 8.5).
+    $headers = function_exists('http_get_last_response_headers')
+        ? (http_get_last_response_headers() ?? [])
+        : ($http_response_header ?? []);
+    $statusLines = array_values(array_filter($headers, static fn($h) => str_starts_with((string)$h, 'HTTP/')));
+    $statusLine  = (string)($statusLines[count($statusLines) - 1] ?? '');
+    $isHttpOk    = (bool)preg_match('#^HTTP/\S+\s+200\b#', $statusLine);
 
     if ($raw === false || !$isHttpOk) {
         throw new RuntimeException("Erreur lors de l'appel OpenF1: {$url} ({$statusLine})");

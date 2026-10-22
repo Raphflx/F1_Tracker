@@ -34,9 +34,7 @@ try {
 }
 ?>
 
-<button class="back-btn" onclick="window.location.href='index.php'">
-  ← Retour à l’accueil
-</button>
+<a class="back-btn" href="index.php">← Retour à l’accueil</a>
 
 <h2>Calendrier – Choisir une saison</h2>
 <p class="section-subtitle">

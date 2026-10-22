@@ -1,14 +1,11 @@
 <?php
 declare(strict_types=1);
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-
 require_once __DIR__ . '/../lib/openf1.php';
 require_once __DIR__ . '/../lib/api.php';
 
-$meetingKey = filter_input(INPUT_GET, 'meeting_key', FILTER_VALIDATE_INT);
-if (!$meetingKey) {
+$meetingKey = api_get_positive_int('meeting_key');
+if ($meetingKey === null) {
     api_response(null, 'Paramètre meeting_key invalide.', 400);
     exit;
 }

@@ -12,6 +12,10 @@ declare(strict_types=1);
 
 $title = $pageTitle ?? 'F1 Tracker';
 
+// Description (résultats des moteurs de recherche), surchargeable par $pageDescription
+$description = $pageDescription
+    ?? 'Un tableau de bord simple pour suivre le calendrier de la saison de F1, les sessions du week-end et un live timing lisible (météo, compte à rebours, état de piste).';
+
 // Détecte la section active pour la nav (peut être surchargée par $navSection)
 $_currentPage = basename($_SERVER['PHP_SELF'] ?? '');
 $_navSection  = $navSection ?? $_currentPage;
@@ -32,6 +36,7 @@ function nav_active(string $page, string $section): string {
 
   <!-- Titre dynamique -->
   <title><?= htmlspecialchars($title, ENT_QUOTES) ?></title>
+  <meta name="description" content="<?= htmlspecialchars($description, ENT_QUOTES) ?>">
 
   <!-- Favicons : .ico (anciens navigateurs), SVG (navigateurs récents),
        icône Apple (écran d'accueil iOS) et manifest (Android / PWA) -->

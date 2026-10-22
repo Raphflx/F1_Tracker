@@ -14,9 +14,7 @@ $pageTitle = 'Crédits & mentions – F1 Tracker';
 require __DIR__ . '/includes/header.php';
 ?>
 
-<button class="back-btn" onclick="window.location.href='index.php'">
-  ← Retour à l’accueil
-</button>
+<a class="back-btn" href="index.php">← Retour à l’accueil</a>
 
 <h2>Crédits & mentions</h2>
 

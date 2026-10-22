@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| Calendrier 2025
+| Calendrier d'une saison
 |--------------------------------------------------------------------------
 | - Récupère la liste des meetings (GP)
 | - Calcule la plage de dates du week-end à partir des sessions
