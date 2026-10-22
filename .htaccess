@@ -8,5 +8,8 @@ Options -Indexes
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
+# Type MIME du manifest (favicons Android / PWA)
+AddType application/manifest+json .webmanifest
+
 # Ne pas exposer la version PHP/Apache
 ServerSignature Off
