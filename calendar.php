@@ -10,64 +10,24 @@ declare(strict_types=1);
 | - Affiche une grille de cartes cliquables vers grandprix.php
 */
 
-require __DIR__ . '/lib/openf1.php';
-require __DIR__ . '/lib/text.php';
-require __DIR__ . '/lib/datetime.php';
+require_once __DIR__ . '/lib/openf1.php';
 
 $pageTitle = 'Calendrier – F1 Tracker';
 require __DIR__ . '/includes/header.php';
 
-$year = filter_input(INPUT_GET, 'year', FILTER_VALIDATE_INT) ?? 2026;
-if ($year < 1950 || $year > 2100) {
-    $year = 2025;
+// Année : paramètre GET, année courante par défaut ou si invalide
+$year = filter_input(INPUT_GET, 'year', FILTER_VALIDATE_INT);
+if (!$year || $year < 1950 || $year > 2100) {
+    $year = (int)date('Y');
 }
 
-
-$allowedYears = [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
-if (!in_array($year, $allowedYears, true)) {
-    $year = 2026;
-}
-
-// Chargement OpenF1 (meetings + sessions)
+// Chargement des meetings (plage week-end calculée par le service)
 try {
-    $meetings = openf1_get("meetings?year={$year}");
-    $sessions = openf1_get("sessions?year={$year}");
+    $meetings = f1_get_meetings($year);
 } catch (Throwable $e) {
     $meetings = [];
-    $sessions = [];
     error_log('[F1Tracker] calendar.php : ' . $e->getMessage());
     $errorMessage = 'Impossible de charger les données. Veuillez réessayer plus tard.';
-}
-
-// Index sessions -> plage week-end par meeting_key
-$weekendRanges = [];
-
-foreach ($sessions as $session) {
-    if (!isset($session['meeting_key'], $session['date_start'], $session['date_end'])) {
-        continue;
-    }
-
-    $meetingKey = (string)$session['meeting_key'];
-
-    $utcStart = new DateTime((string)$session['date_start'], new DateTimeZone('UTC'));
-    $utcEnd   = new DateTime((string)$session['date_end'],   new DateTimeZone('UTC'));
-
-    $offsetMinutes = parse_gmt_offset_to_minutes($session['gmt_offset'] ?? null);
-
-    $localStart = utc_to_local_with_offset($utcStart, $offsetMinutes);
-    $localEnd   = utc_to_local_with_offset($utcEnd,   $offsetMinutes);
-
-    if (!isset($weekendRanges[$meetingKey])) {
-        $weekendRanges[$meetingKey] = ['start' => $localStart, 'end' => $localEnd];
-        continue;
-    }
-
-    if ($localStart < $weekendRanges[$meetingKey]['start']) {
-        $weekendRanges[$meetingKey]['start'] = $localStart;
-    }
-    if ($localEnd > $weekendRanges[$meetingKey]['end']) {
-        $weekendRanges[$meetingKey]['end'] = $localEnd;
-    }
 }
 ?>
 
@@ -90,28 +50,14 @@ foreach ($sessions as $session) {
   <?php else: ?>
     <?php foreach ($meetings as $meeting): ?>
       <?php
-        $mk = (string)($meeting['meeting_key'] ?? '');
-        if ($mk === '') {
-            continue;
-        }
+        $mk      = (string)$meeting['meeting_key'];
+        $circuit = $meeting['circuit'] !== '' ? $meeting['circuit'] : 'Circuit inconnu';
+        $country = $meeting['country_name'] !== '' ? $meeting['country_name'] : 'Pays inconnu';
 
-        $circuit = (string)($meeting['circuit_short_name'] ?? ($meeting['location'] ?? 'Circuit inconnu'));
-        $country = (string)($meeting['country_name'] ?? 'Pays inconnu');
-
-        // Date du week-end à partir des sessions (meilleur) + fallback
-        if (isset($weekendRanges[$mk])) {
-            $start = $weekendRanges[$mk]['start'];
-            $end   = $weekendRanges[$mk]['end'];
-        } else {
-            $utcStart = new DateTime((string)($meeting['date_start'] ?? '1970-01-01'), new DateTimeZone('UTC'));
-            $offsetMinutes = parse_gmt_offset_to_minutes($meeting['gmt_offset'] ?? null);
-
-            $start = utc_to_local_with_offset($utcStart, $offsetMinutes);
-            $end = clone $start;
-            $end->modify('+2 days');
-        }
-
-        $weekendText = format_weekend_range($start, $end);
+        // Plage du week-end (heure locale circuit)
+        $weekendText = ($meeting['weekend_start'] && $meeting['weekend_end'])
+            ? format_weekend_range(new DateTime($meeting['weekend_start']), new DateTime($meeting['weekend_end']))
+            : 'Dates à venir';
 
         // Lien propre (slug) + meeting_key
         $slug = slugify($country . '-' . $circuit);

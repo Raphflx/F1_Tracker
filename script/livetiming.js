@@ -25,19 +25,19 @@
 
       const d = json.data;
 
-      if (elTrackTemp)   elTrackTemp.textContent   = fmt(d.trackTemp, '°C');
-      if (elAirTemp)     elAirTemp.textContent      = fmt(d.airTemp, '°C');
+      if (elTrackTemp)   elTrackTemp.textContent   = fmt(d.track_temp, '°C');
+      if (elAirTemp)     elAirTemp.textContent      = fmt(d.air_temp, '°C');
       if (elHumidity)    elHumidity.textContent     = fmt(d.humidity, '%');
-      if (elWind)        elWind.textContent         = fmt(d.windSpeed, ' km/h');
+      if (elWind)        elWind.textContent         = fmt(d.wind_speed, ' km/h');
 
       if (elTrackStatus) {
-        elTrackStatus.textContent = d.trackStatus;
-        elTrackStatus.className   = 'track-status-badge ' + d.trackStatusClass;
+        elTrackStatus.textContent = d.track_status;
+        elTrackStatus.className   = 'track-status-badge ' + d.track_status_class;
       }
 
       if (elLaps) {
-        const current = d.currentLap ?? '—';
-        const total   = d.totalLaps  ?? '—';
+        const current = d.current_lap ?? '—';
+        const total   = d.total_laps ?? '—';
         elLaps.textContent = current + '/' + total;
       }
     } catch (_) {

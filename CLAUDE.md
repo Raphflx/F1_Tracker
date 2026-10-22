@@ -24,13 +24,21 @@ F1_Tracker/
 ├── includes/
 │   ├── header.php      # En-tête commun à toutes les pages
 │   └── footer.php      # Pied de page commun
+├── api/                # Endpoints JSON internes (backend consommé par le JS)
+│   ├── years.php             # Saisons disponibles
+│   ├── meetings.php          # ?year= — GP d'une saison
+│   ├── meeting.php           # ?meeting_key= — détail d'un GP + sessions
+│   ├── livetiming_focus.php  # ?year= (optionnel) — session focus + statut
+│   └── livetiming_status.php # ?session_key= — météo, état piste, tours
 ├── lib/
-│   ├── openf1.php      # ← Tous les appels à l'API F1 (OpenF1)
+│   ├── openf1.php      # ← Tous les appels à l'API F1 (OpenF1) + services métier (f1_get_*)
+│   ├── api.php         # api_response() : format JSON commun { data, error }
 │   ├── datetime.php    # Helpers dates et heures
 │   └── text.php        # Helpers texte / formatage
 ├── script/
 │   ├── script.js       # Zoom image circuit (chargé globalement via footer.php)
-│   └── countdown.js    # Compte à rebours live timing (chargé par livetiming.php)
+│   ├── countdown.js    # Compte à rebours live timing (chargé par livetiming.php)
+│   └── livetiming.js   # Polling météo / état piste / tours (chargé par livetiming.php)
 └── img/                # Images statiques
 ```
 
@@ -48,6 +56,9 @@ F1_Tracker/
 ## Conventions de code
 
 - Les appels API sont **exclusivement** centralisés dans `lib/openf1.php`. Ne jamais appeler l'API directement depuis une page PHP ou un script JS.
+- **Séparation back / front** : la logique métier (appels OpenF1 + calculs) est écrite une seule fois, sous forme de services `f1_get_*()` dans `lib/openf1.php`. Les pages PHP (rendu serveur) et les endpoints `api/*.php` (JSON) ne font qu'appeler ces services ; les pages ne gardent que le formatage d'affichage.
+- Les endpoints `api/` valident leurs paramètres, appellent un service puis répondent via `api_response()` (`{ "data": ..., "error": null|"message" }`, clés en `snake_case`, dates en ISO 8601). Le JS ne parle qu'à `api/`, jamais à OpenF1.
+- Les fichiers de `lib/` sont inclus avec `require_once` (`lib/openf1.php` inclut déjà `datetime.php` et `text.php`).
 - Les fonctions utilitaires de date/heure vont dans `lib/datetime.php`, celles de texte dans `lib/text.php`.
 - Le HTML commun (header, footer) est inclus via `includes/`. Toute nouvelle page doit inclure ces deux fichiers.
 - Le CSS global est dans `style.css` à la racine. Pas de CSS inline sauf cas exceptionnel justifié.

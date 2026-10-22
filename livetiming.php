@@ -11,117 +11,57 @@ declare(strict_types=1);
 | - Affiche tours (xx/yy si dispo) + état piste (clair / safety car / rouge...)
 */
 
-require __DIR__ . '/lib/openf1.php';
-require __DIR__ . '/lib/text.php';
-require __DIR__ . '/lib/datetime.php';
+require_once __DIR__ . '/lib/openf1.php';
 
 date_default_timezone_set('Europe/Paris');
 
 $pageTitle = 'Live timing – F1 Tracker';
 require __DIR__ . '/includes/header.php';
 
-$YEAR = 2025;
-
 // ---------------------------------------------------------
-// 1) Chargement sessions (année) + session focus
+// 1) Session focus de la saison en cours (+ meeting + statut)
 // ---------------------------------------------------------
 $errorMessage = null;
-$sessions = [];
-$focusSession = null;
+$focus = null;
 
 try {
-    $sessions = openf1_get("sessions?year={$YEAR}");
-    // Tri chronologique
-    usort($sessions, static function (array $a, array $b): int {
-        return strtotime((string)($a['date_start'] ?? '1970-01-01')) <=> strtotime((string)($b['date_start'] ?? '1970-01-01'));
-    });
-
-    $focusSession = pick_focus_session($sessions, new DateTime('now', new DateTimeZone('Europe/Paris')));
+    $focus = f1_get_livetiming_focus((int)date('Y'));
+    if ($focus && $focus['status'] === null) {
+        $errorMessage = 'Impossible de charger les données temps réel. Veuillez réessayer plus tard.';
+    }
 } catch (Throwable $e) {
-    error_log('[F1Tracker] livetiming.php (sessions) : ' . $e->getMessage());
+    error_log('[F1Tracker] livetiming.php : ' . $e->getMessage());
     $errorMessage = 'Impossible de charger les sessions. Veuillez réessayer plus tard.';
 }
 
-// ---------------------------------------------------------
-// 2) Chargement meeting + weather + race_control (si session)
-// ---------------------------------------------------------
-$meeting = null;
-$weather = null;
-$raceControl = [];
-
-if ($focusSession && isset($focusSession['meeting_key'], $focusSession['session_key'])) {
-    try {
-        $meetingList = openf1_get('meetings?meeting_key=' . urlencode((string)$focusSession['meeting_key']));
-        $meeting = $meetingList[0] ?? null;
-
-        // Weather : on prend la dernière mesure (la plus récente)
-        $weatherList = openf1_get('weather?session_key=' . urlencode((string)$focusSession['session_key']));
-        if (!empty($weatherList)) {
-            usort($weatherList, static fn($a, $b) => strtotime((string)$a['date']) <=> strtotime((string)$b['date']));
-            $weather = $weatherList[count($weatherList) - 1];
-        }
-
-        // Race control (pour tours + statut piste)
-        // On limite aux dernières 2h pour éviter de récupérer trop de données
-        $sinceUtc = new DateTime('now', new DateTimeZone('UTC'));
-        $sinceUtc->modify('-2 hours');
-        $sinceIso = $sinceUtc->format('Y-m-d\TH:i:s');
-
-        $raceControl = openf1_get(
-            'race_control?session_key=' . urlencode((string)$focusSession['session_key']) .
-            '&date>=' . urlencode($sinceIso)
-        );
-    } catch (Throwable $e) {
-        error_log('[F1Tracker] livetiming.php (météo/race_control) : ' . $e->getMessage());
-        $errorMessage = $errorMessage ?: 'Impossible de charger les données temps réel. Veuillez réessayer plus tard.';
-    }
-}
+$focusSession = $focus['session'] ?? null;
+$meeting      = $focus['meeting'] ?? null;
+$status       = $focus['status']  ?? [];
 
 // ---------------------------------------------------------
-// 3) Préparation affichage bandeau
+// 2) Préparation affichage bandeau
 // ---------------------------------------------------------
-$nowParis = new DateTime('now', new DateTimeZone('Europe/Paris'));
-
 $bannerTitle = $meeting['meeting_name'] ?? null;
-$bannerCountry = $meeting['country_name'] ?? null;
 
 $sessionName = $focusSession['session_name'] ?? null;
 $sessionType = $focusSession['session_type'] ?? null;
+$phase       = $focusSession['phase'] ?? 'finished';
 
-$startUtc = $focusSession['date_start'] ?? null;
-$endUtc   = $focusSession['date_end'] ?? null;
-
-$startParis = $startUtc ? (new DateTime((string)$startUtc, new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Paris')) : null;
-$endParis   = $endUtc   ? (new DateTime((string)$endUtc,   new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Paris')) : null;
-
-$phase = 'finished';
-if ($startParis && $endParis) {
-    if ($nowParis < $startParis) $phase = 'upcoming';
-    elseif ($nowParis <= $endParis) $phase = 'live';
-    else $phase = 'finished';
-}
+$startParis = !empty($focusSession['date_start']) ? new DateTime($focusSession['date_start']) : null;
+$endParis   = !empty($focusSession['date_end'])   ? new DateTime($focusSession['date_end'])   : null;
 
 // Météo
-$trackTempText = isset($weather['track_temp']) ? ((int)round((float)$weather['track_temp']) . '°C') : 'N/A';
-$airTempText   = isset($weather['air_temp'])   ? ((int)round((float)$weather['air_temp']) . '°C')   : 'N/A';
-$humidityText  = isset($weather['humidity'])   ? ((int)round((float)$weather['humidity']) . '%')    : 'N/A';
-
-$windText = 'N/A';
-if (isset($weather['wind_speed'])) {
-    $windText = (int)round((float)$weather['wind_speed']) . ' km/h';
-}
+$fmt = static fn(?int $v, string $unit): string => $v !== null ? $v . $unit : 'N/A';
+$trackTempText = $fmt($status['track_temp'] ?? null, '°C');
+$airTempText   = $fmt($status['air_temp']   ?? null, '°C');
+$humidityText  = $fmt($status['humidity']   ?? null, '%');
+$windText      = $fmt($status['wind_speed'] ?? null, ' km/h');
 
 // Tours + statut piste
-[$trackStatusLabel, $trackStatusClass] = track_status_from_race_control($raceControl);
-$currentLap = current_lap_from_race_control($raceControl);
-
-// Total tours : si OpenF1 ne le fournit pas dans session/meeting, on met "—"
-$totalLaps = null;
-if (isset($focusSession['total_laps'])) {
-    $totalLaps = (int)$focusSession['total_laps'];
-} elseif (isset($focusSession['lap_count'])) {
-    $totalLaps = (int)$focusSession['lap_count'];
-}
+$trackStatusLabel = $status['track_status']       ?? 'Clair';
+$trackStatusClass = $status['track_status_class'] ?? 'track-status--green';
+$currentLap = $status['current_lap'] ?? null;
+$totalLaps  = $status['total_laps']  ?? null;
 $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (string)$totalLaps : '—');
 
 ?>
