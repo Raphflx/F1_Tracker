@@ -33,6 +33,13 @@ function nav_active(string $page, string $section): string {
   <!-- Titre dynamique -->
   <title><?= htmlspecialchars($title, ENT_QUOTES) ?></title>
 
+  <!-- Favicons : .ico (anciens navigateurs), SVG (navigateurs récents),
+       icône Apple (écran d'accueil iOS) et manifest (Android / PWA) -->
+  <link rel="icon" href="img/favicon/favicon.ico" sizes="32x32">
+  <link rel="icon" href="img/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="img/favicon/site.webmanifest">
+
   <!-- Feuille de style globale -->
   <link rel="stylesheet" href="style.css">
 </head>

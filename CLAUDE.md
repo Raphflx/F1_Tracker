@@ -40,6 +40,7 @@ F1_Tracker/
 │   ├── countdown.js    # Compte à rebours live timing (chargé par livetiming.php)
 │   └── livetiming.js   # Polling météo / état piste / tours (chargé par livetiming.php)
 └── img/                # Images statiques
+    └── favicon/        # Favicons + site.webmanifest (liés dans includes/header.php)
 ```
 
 ---
