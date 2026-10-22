@@ -20,7 +20,7 @@ require __DIR__ . '/includes/header.php';
 
     <h2>F1 Tracker</h2>
     <p class="home-lead">
-      Un tableau de bord simple pour suivre le calendrier 2025, les sessions du week-end
+      Un tableau de bord simple pour suivre le calendrier de la saison, les sessions du week-end
       et un live timing lisible (météo, compte à rebours, état de piste).
     </p>
 
@@ -41,7 +41,7 @@ require __DIR__ . '/includes/header.php';
     <div class="home-card-icon">📅</div>
     <div class="home-card-body">
       <h3>Calendriers</h3>
-      <p>Liste complète des Grands Prix a partir de 2025.</p>
+      <p>Liste complète des Grands Prix, saison par saison.</p>
     </div>
   </a>
 
