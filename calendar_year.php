@@ -10,7 +10,7 @@ declare(strict_types=1);
 | - Redirige vers calendar.php?year=XXXX
 */
 
-require __DIR__ . '/lib/openf1.php';
+require_once __DIR__ . '/lib/openf1.php';
 
 $pageTitle = 'Choisir une saison – F1 Tracker';
 require __DIR__ . '/includes/header.php';
@@ -19,38 +19,7 @@ $errorMessage = null;
 $years = [];
 
 try {
-    // On récupère tous les meetings et on déduit les années.
-    // (OpenF1 renvoie généralement un champ "year"; sinon on parse date_start)
-    $meetings = openf1_get('meetings');
-
-    $set = [];
-
-    foreach ($meetings as $m) {
-        // 1) Priorité au champ year si présent
-        if (isset($m['year']) && is_numeric($m['year'])) {
-            $y = (int)$m['year'];
-            if ($y > 1950 && $y < 2100) {
-                $set[$y] = true;
-                continue;
-            }
-        }
-
-        // 2) Fallback: parse date_start (ISO)
-        if (!empty($m['date_start'])) {
-            try {
-                $dt = new DateTime((string)$m['date_start'], new DateTimeZone('UTC'));
-                $y = (int)$dt->format('Y');
-                if ($y > 1950 && $y < 2100) {
-                    $set[$y] = true;
-                }
-            } catch (Throwable) {
-                // ignore date parse errors
-            }
-        }
-    }
-
-    $years = array_keys($set);
-    rsort($years);
+    $years = f1_get_years();
 
     // Si l'API renvoie vide, on met un fallback propre
     if (empty($years)) {

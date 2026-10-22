@@ -40,7 +40,11 @@ function nav_active(string $page, string $section): string {
 
 <!-- En-tête principal du site -->
 <header>
-  <h1>F1 Tracker</h1>
+  <!-- Titre + lien de retour vers le site personnel -->
+  <div class="header-brand">
+    <h1>F1 Tracker</h1>
+    <a href="https://chpraph.fr" class="header-home-btn">&larr; chpraph.fr</a>
+  </div>
 
   <!-- Navigation principale -->
   <nav>

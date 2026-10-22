@@ -10,9 +10,7 @@ declare(strict_types=1);
 | - Affiche : infos circuit + image + tableau des sessions (heure circuit & heure France)
 */
 
-require __DIR__ . '/lib/openf1.php';
-require __DIR__ . '/lib/text.php';
-require __DIR__ . '/lib/datetime.php';
+require_once __DIR__ . '/lib/openf1.php';
 
 // ----------------------
 // 1) Paramètre d’entrée
@@ -36,21 +34,16 @@ $meeting = null;
 $sessions = [];
 
 try {
-    $meetingList = openf1_get('meetings?meeting_key=' . urlencode((string)$meetingKey));
-    $meeting = $meetingList[0] ?? null;
-
-    $sessions = openf1_get('sessions?meeting_key=' . urlencode((string)$meetingKey));
+    // Meeting + sessions triées (heures locale et France calculées par le service)
+    $detail = f1_get_meeting($meetingKey);
+    if ($detail) {
+        $meeting  = $detail['meeting'];
+        $sessions = $detail['sessions'];
+    }
 } catch (Throwable $e) {
     error_log('[F1Tracker] grandprix.php : ' . $e->getMessage());
     $errorMessage = 'Impossible de charger les données du Grand Prix. Veuillez réessayer plus tard.';
 }
-
-// Tri des sessions par date de début (UTC)
-usort($sessions, static function (array $a, array $b): int {
-    $da = $a['date_start'] ?? '1970-01-01T00:00:00Z';
-    $db = $b['date_start'] ?? '1970-01-01T00:00:00Z';
-    return strtotime($da) <=> strtotime($db);
-});
 
 // ----------------------
 // 3) Préparation affichage
@@ -63,30 +56,18 @@ if (!$meeting && !$errorMessage) {
 }
 
 // Image circuit (si dispo)
-$circuit = (string)($meeting['circuit_short_name'] ?? ($meeting['location'] ?? 'Circuit inconnu'));
+$circuit = (string)($meeting['circuit'] ?? '') ?: 'Circuit inconnu';
 $country = (string)($meeting['country_name'] ?? '');
 $location = (string)($meeting['location'] ?? '');
 
-$slug = slugify($circuit);
+$slug = (string)($meeting['circuit_slug'] ?? slugify($circuit));
 $relativeImagePath = "img/circuits/{$slug}.png";
 $circuitImage = file_exists($relativeImagePath) ? $relativeImagePath : null;
 
-// Plage week-end (basée sur sessions) en heure locale circuit
+// Plage week-end (heure locale circuit)
 $weekendText = '';
-if (!empty($sessions)) {
-    $first = $sessions[0];
-    $last  = $sessions[count($sessions) - 1];
-
-    $utcStart = new DateTime((string)$first['date_start'], new DateTimeZone('UTC'));
-    $utcEnd   = new DateTime((string)$last['date_end'],   new DateTimeZone('UTC'));
-
-    $offsetStart = parse_gmt_offset_to_minutes($first['gmt_offset'] ?? null);
-    $offsetEnd   = parse_gmt_offset_to_minutes($last['gmt_offset'] ?? null);
-
-    $localStart = utc_to_local_with_offset($utcStart, $offsetStart);
-    $localEnd   = utc_to_local_with_offset($utcEnd,   $offsetEnd);
-
-    $weekendText = format_weekend_range($localStart, $localEnd);
+if (!empty($meeting['weekend_start']) && !empty($meeting['weekend_end'])) {
+    $weekendText = format_weekend_range(new DateTime($meeting['weekend_start']), new DateTime($meeting['weekend_end']));
 }
 ?>
 
@@ -156,18 +137,13 @@ if (!empty($sessions)) {
 
             <?php foreach ($sessions as $session): ?>
               <?php
-                $utcStart = new DateTime((string)($session['date_start'] ?? '1970-01-01T00:00:00Z'), new DateTimeZone('UTC'));
-
-                // Heure locale circuit via gmt_offset
-                $offsetMinutes = parse_gmt_offset_to_minutes($session['gmt_offset'] ?? null);
-                $localStart = utc_to_local_with_offset($utcStart, $offsetMinutes);
-
+                // Heure locale circuit
+                $localStart = new DateTime($session['local_start']);
                 $localDayStr = day_en_to_fr($localStart->format('l')) . ' ' . $localStart->format('d/m');
                 $localTimeStr = $localStart->format('H:i');
 
                 // Heure France (Europe/Paris)
-                $frStart = clone $utcStart;
-                $frStart->setTimezone(new DateTimeZone('Europe/Paris'));
+                $frStart = new DateTime($session['paris_start']);
 
                 $frDayStr = day_en_to_fr($frStart->format('l')) . ' ' . $frStart->format('d/m');
                 $frTimeStr = $frStart->format('H:i');

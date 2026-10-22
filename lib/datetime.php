@@ -9,12 +9,13 @@ require_once __DIR__ . '/text.php';
 
 function parse_gmt_offset_to_minutes(?string $offset): int
 {
-    // Formats possibles : "+02:00", "-05:00", "+02:00:00", "-05:00:00"
+    // Formats possibles : "02:00:00" (format OpenF1, signe absent si positif),
+    // "+02:00", "-05:00", "+02:00:00", "-05:00:00"
     if ($offset === null || $offset === '') {
         return 0;
     }
 
-    if (!preg_match('/^([+-])(\d{2}):(\d{2})(?::(\d{2}))?$/', $offset, $m)) {
+    if (!preg_match('/^([+-]?)(\d{2}):(\d{2})(?::(\d{2}))?$/', $offset, $m)) {
         return 0;
     }
 
@@ -26,15 +27,29 @@ function parse_gmt_offset_to_minutes(?string $offset): int
     return $sign * ($h * 60 + $min + intdiv($sec, 60));
 }
 
+/**
+ * Convertit une date UTC vers le fuseau du circuit (décalage en minutes).
+ * Le DateTime renvoyé porte le bon décalage (ex. "+02:00" en ISO 8601).
+ */
 function utc_to_local_with_offset(DateTime $utc, int $offsetMinutes): DateTime
 {
+    $sign = $offsetMinutes < 0 ? '-' : '+';
+    $abs  = abs($offsetMinutes);
+    $tz   = new DateTimeZone(sprintf('%s%02d:%02d', $sign, intdiv($abs, 60), $abs % 60));
+
     // On clone pour éviter de modifier l'objet initial
-    $local = clone $utc;
+    return (clone $utc)->setTimezone($tz);
+}
 
-    $prefix = $offsetMinutes >= 0 ? '+' : '';
-    $local->modify($prefix . $offsetMinutes . ' minutes');
-
-    return $local;
+/**
+ * Convertit une date UTC (chaîne OpenF1) en heure de Paris.
+ */
+function utc_string_to_paris(?string $utc): ?DateTime
+{
+    if ($utc === null || $utc === '') {
+        return null;
+    }
+    return (new DateTime($utc, new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Paris'));
 }
 
 function format_date_fr(DateTime $dt): string
