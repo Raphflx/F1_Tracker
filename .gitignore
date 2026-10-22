@@ -9,6 +9,7 @@ Thumbs.db
 
 # Local only / secrets
 .env
+.claude/settings.local.json
 
 # Optional: dependencies caches
 node_modules/

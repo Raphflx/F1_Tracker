@@ -6,6 +6,18 @@ Options -Indexes
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    # CSP : toutes les ressources (CSS, JS, images, API interne) sont servies par le site lui-même.
+    # Pas de script ni de style inline autorisé → ne pas utiliser onclick="" ni style="".
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+</IfModule>
+
+# Bloquer l'accès web aux fichiers du dépôt qui ne sont pas destinés au public :
+# dossiers/fichiers cachés (.git, .claude, .env…) sauf .well-known (certificats SSL),
+# et documentation Markdown (README.md, CLAUDE.md)
+<IfModule mod_alias.c>
+    RedirectMatch 404 "/\.(?!well-known/)"
+    RedirectMatch 404 "\.md$"
 </IfModule>
 
 # Type MIME du manifest (favicons Android / PWA)

@@ -1,14 +1,11 @@
 <?php
 declare(strict_types=1);
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-
 require_once __DIR__ . '/../lib/openf1.php';
 require_once __DIR__ . '/../lib/api.php';
 
-$sessionKey = filter_input(INPUT_GET, 'session_key', FILTER_VALIDATE_INT);
-if (!$sessionKey) {
+$sessionKey = api_get_positive_int('session_key');
+if ($sessionKey === null) {
     api_response(null, 'session_key manquant ou invalide.', 400);
     exit;
 }

@@ -32,7 +32,7 @@ F1_Tracker/
 │   └── livetiming_status.php # ?session_key= — météo, état piste, tours
 ├── lib/
 │   ├── openf1.php      # ← Tous les appels à l'API F1 (OpenF1) + services métier (f1_get_*)
-│   ├── api.php         # api_response() : format JSON commun { data, error }
+│   ├── api.php         # api_response() (JSON { data, error } + en-têtes) et validation des paramètres GET
 │   ├── datetime.php    # Helpers dates et heures
 │   └── text.php        # Helpers texte / formatage
 ├── script/
@@ -62,7 +62,7 @@ F1_Tracker/
 - Les fichiers de `lib/` sont inclus avec `require_once` (`lib/openf1.php` inclut déjà `datetime.php` et `text.php`).
 - Les fonctions utilitaires de date/heure vont dans `lib/datetime.php`, celles de texte dans `lib/text.php`.
 - Le HTML commun (header, footer) est inclus via `includes/`. Toute nouvelle page doit inclure ces deux fichiers.
-- Le CSS global est dans `style.css` à la racine. Pas de CSS inline sauf cas exceptionnel justifié.
+- Le CSS global est dans `style.css` à la racine. Pas de CSS inline (`style=""`, `<style>`) ni de JS inline (`onclick=""`, `<script>…</script>`) : la CSP du `.htaccess` les bloque. Toute ressource externe (CDN, police…) doit être ajoutée explicitement à la CSP.
 - Les scripts JS sont dans `script/`. Chaque fichier a une responsabilité unique. Les scripts globaux sont chargés via `footer.php`, les scripts spécifiques à une page sont inclus directement dans cette page.
 - Le code est rédigé **en français** (commentaires, noms de variables, messages utilisateur).
 

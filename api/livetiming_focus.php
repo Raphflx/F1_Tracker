@@ -1,17 +1,12 @@
 <?php
 declare(strict_types=1);
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-
 require_once __DIR__ . '/../lib/openf1.php';
 require_once __DIR__ . '/../lib/api.php';
 
 // Année : paramètre optionnel, année courante par défaut
-$year = isset($_GET['year'])
-    ? filter_input(INPUT_GET, 'year', FILTER_VALIDATE_INT)
-    : (int)date('Y');
-if (!$year || $year < 1950 || $year > 2100) {
+$year = api_get_year((int)date('Y'));
+if ($year === null) {
     api_response(null, 'Paramètre year invalide.', 400);
     exit;
 }
