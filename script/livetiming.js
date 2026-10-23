@@ -5,6 +5,12 @@
   const sessionKey  = countdown ? parseInt(countdown.dataset.sessionKey, 10) : 0;
   if (!sessionKey) return;
 
+  // Mode démo : data-demo contient les paramètres déjà validés côté serveur
+  // (ex. "demo=live&piste=sc&tour=12") pour que l'API renvoie les mêmes données simulées
+  const demoQuery = countdown.dataset.demo || '';
+  const url = 'api/livetiming_status.php?session_key=' + sessionKey +
+              (demoQuery ? '&' + demoQuery : '');
+
   const elLaps        = document.getElementById('lt-laps');
   const elTrackStatus = document.getElementById('lt-track-status');
   const elTrackTemp   = document.getElementById('lt-track-temp');
@@ -18,7 +24,7 @@
 
   async function refresh() {
     try {
-      const res = await fetch('api/livetiming_status.php?session_key=' + sessionKey);
+      const res = await fetch(url);
       if (!res.ok) return;
       const json = await res.json();
       if (json.error || !json.data) return;

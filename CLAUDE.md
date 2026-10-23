@@ -33,6 +33,7 @@ F1_Tracker/
 ├── lib/
 │   ├── openf1.php      # ← Tous les appels à l'API F1 (OpenF1) + services métier (f1_get_*)
 │   ├── api.php         # api_response() (JSON { data, error } + en-têtes) et validation des paramètres GET
+│   ├── simulation.php  # Simulateur OpenF1 du mode démo (?demo=… + valeurs forcées : piste, temp_piste, temp_air, humidite, vent, tour)
 │   ├── datetime.php    # Helpers dates et heures
 │   └── text.php        # Helpers texte / formatage
 ├── script/
@@ -59,6 +60,7 @@ F1_Tracker/
 - Les appels API sont **exclusivement** centralisés dans `lib/openf1.php`. Ne jamais appeler l'API directement depuis une page PHP ou un script JS.
 - **Séparation back / front** : la logique métier (appels OpenF1 + calculs) est écrite une seule fois, sous forme de services `f1_get_*()` dans `lib/openf1.php`. Les pages PHP (rendu serveur) et les endpoints `api/*.php` (JSON) ne font qu'appeler ces services ; les pages ne gardent que le formatage d'affichage.
 - Les endpoints `api/` valident leurs paramètres, appellent un service puis répondent via `api_response()` (`{ "data": ..., "error": null|"message" }`, clés en `snake_case`, dates en ISO 8601). Le JS ne parle qu'à `api/`, jamais à OpenF1.
+- **Mode démo** : `livetiming.php` et ses endpoints acceptent `?demo=1|live|upcoming|finished`. `f1_set_demo_phase()` fait alors répondre `openf1_get()` par le simulateur `lib/simulation.php` (mêmes champs qu'OpenF1, aucun appel réseau, données fictives). Toute nouvelle donnée live (positions, pilotes…) doit avoir son équivalent simulé dans `demo_openf1_get()`, et le JS doit propager le paramètre `demo` à `api/`.
 - Les fichiers de `lib/` sont inclus avec `require_once` (`lib/openf1.php` inclut déjà `datetime.php` et `text.php`).
 - Les fonctions utilitaires de date/heure vont dans `lib/datetime.php`, celles de texte dans `lib/text.php`.
 - Le HTML commun (header, footer) est inclus via `includes/`. Toute nouvelle page doit inclure ces deux fichiers.
