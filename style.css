@@ -701,21 +701,56 @@ tr:last-child td {
   font-size: 0.95rem;
 }
 
-.demo-banner-links {
-  display: block;
-  margin-top: 0.4rem;
-  color: var(--muted);
-}
-
-.demo-banner-links a {
+.demo-banner p {
+  margin: 0 0 0.8rem;
   color: var(--text-2);
-  margin: 0 0.2rem;
 }
 
-.demo-banner-links a[aria-current="true"] {
+/* Encart de réglage des valeurs simulées */
+.demo-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.demo-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--muted-2);
+}
+
+.demo-form select,
+.demo-form input {
+  font: inherit;
   color: var(--text);
-  font-weight: 700;
-  text-decoration: none;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.55rem;
+  width: 100%;
+}
+
+.demo-form select:focus,
+.demo-form input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.demo-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.demo-quit {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .demo-link {

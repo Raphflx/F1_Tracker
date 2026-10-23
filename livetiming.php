@@ -16,8 +16,9 @@ require_once __DIR__ . '/lib/openf1.php';
 date_default_timezone_set('Europe/Paris');
 
 // Mode démo (?demo=1|live|upcoming|finished) : données simulées, pour tester sans GP réel
-$demoPhase = demo_phase_from_query();
-f1_set_demo_phase($demoPhase);
+$demoPhase     = demo_phase_from_query();
+$demoOverrides = $demoPhase ? demo_overrides_from_query() : [];
+f1_set_demo_phase($demoPhase, $demoOverrides);
 
 $pageTitle = ($demoPhase ? 'Démo – ' : '') . 'Live timing – F1 Tracker';
 $pageNoIndex = $demoPhase !== null; // la démo n'a pas à apparaître sur Google
@@ -74,18 +75,49 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
 <a class="back-btn" href="index.php">← Retour à l’accueil</a>
 
 <?php if ($demoPhase): ?>
-  <!-- Bandeau mode démo -->
-  <div class="demo-banner" role="status">
-    <strong>Mode démo — données fictives.</strong>
-    Session simulée pour tester le live timing sans Grand Prix en cours.
-    <span class="demo-banner-links">
-      Phase :
-      <a href="livetiming.php?demo=upcoming"<?= $demoPhase === 'upcoming' ? ' aria-current="true"' : '' ?>>à venir</a>
-      <a href="livetiming.php?demo=live"<?= $demoPhase === 'live' ? ' aria-current="true"' : '' ?>>en cours</a>
-      <a href="livetiming.php?demo=finished"<?= $demoPhase === 'finished' ? ' aria-current="true"' : '' ?>>terminée</a>
-      · <a href="livetiming.php">Quitter la démo</a>
-    </span>
-  </div>
+  <!-- Bandeau + encart de réglage du mode démo (formulaire GET, aucun JS) -->
+  <section class="demo-banner" aria-labelledby="demo-title">
+    <p id="demo-title">
+      <strong>Mode démo — données fictives.</strong>
+      Session simulée pour tester le live timing sans Grand Prix en cours.
+      Les champs laissés vides restent automatiques.
+    </p>
+
+    <form class="demo-form" method="get" action="livetiming.php">
+      <label>
+        Phase
+        <select name="demo">
+          <?php foreach (['upcoming' => 'À venir', 'live' => 'En cours', 'finished' => 'Terminée'] as $value => $label): ?>
+            <option value="<?= $value ?>"<?= $demoPhase === $value ? ' selected' : '' ?>><?= $label ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+
+      <label>
+        État de piste
+        <select name="piste">
+          <?php foreach (['' => 'Automatique', 'vert' => 'Clair', 'jaune' => 'Drapeau jaune', 'sc' => 'Safety Car', 'rouge' => 'Drapeau rouge'] as $value => $label): ?>
+            <option value="<?= $value ?>"<?= ($demoOverrides['piste'] ?? '') === $value ? ' selected' : '' ?>><?= $label ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+
+      <?php foreach (['temp_piste' => 'Temp. piste (°C)', 'temp_air' => 'Temp. air (°C)', 'humidite' => 'Humidité (%)', 'vent' => 'Vent (km/h)', 'tour' => 'Tour'] as $name => $label): ?>
+        <?php [$min, $max] = DEMO_NUMERIC_OVERRIDES[$name]; ?>
+        <label>
+          <?= $label ?>
+          <input type="number" name="<?= $name ?>" min="<?= $min ?>" max="<?= $max ?>" step="1"
+                 placeholder="auto" value="<?= isset($demoOverrides[$name]) ? (int)$demoOverrides[$name] : '' ?>">
+        </label>
+      <?php endforeach; ?>
+
+      <div class="demo-form-actions">
+        <button type="submit" class="primary-btn">Appliquer</button>
+        <a class="secondary-btn button-link" href="livetiming.php?demo=<?= $demoPhase ?>">Réinitialiser</a>
+        <a class="demo-quit" href="livetiming.php">Quitter la démo</a>
+      </div>
+    </form>
+  </section>
 <?php endif; ?>
 
 <?php if ($errorMessage): ?>
@@ -174,7 +206,7 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
     data-start="<?= $startParis ? (string)$startParis->getTimestamp() : '0' ?>"
     data-end="<?= $endParis ? (string)$endParis->getTimestamp() : '0' ?>"
     data-session-key="<?= $focusSession ? (int)$focusSession['session_key'] : '0' ?>"
-    data-demo="<?= htmlspecialchars($demoPhase ?? '', ENT_QUOTES) ?>"
+    data-demo="<?= $demoPhase ? htmlspecialchars(demo_query_string($demoPhase, $demoOverrides), ENT_QUOTES) : '' ?>"
   >
     Chargement…
   </div>

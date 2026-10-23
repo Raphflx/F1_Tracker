@@ -33,7 +33,7 @@ F1_Tracker/
 ├── lib/
 │   ├── openf1.php      # ← Tous les appels à l'API F1 (OpenF1) + services métier (f1_get_*)
 │   ├── api.php         # api_response() (JSON { data, error } + en-têtes) et validation des paramètres GET
-│   ├── simulation.php  # Simulateur OpenF1 du mode démo (?demo=1|live|upcoming|finished)
+│   ├── simulation.php  # Simulateur OpenF1 du mode démo (?demo=… + valeurs forcées : piste, temp_piste, temp_air, humidite, vent, tour)
 │   ├── datetime.php    # Helpers dates et heures
 │   └── text.php        # Helpers texte / formatage
 ├── script/

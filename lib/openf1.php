@@ -16,11 +16,13 @@ const OPENF1_BASE_URL = 'https://api.openf1.org/v1';
 /**
  * Mode démo : active ou désactive le simulateur pour la requête en cours.
  * $phase : 'live' | 'upcoming' | 'finished', ou null pour les données réelles.
+ * $overrides : valeurs forcées validées (cf. demo_overrides_from_query()).
  * Appelé uniquement par les pages / endpoints du live timing.
  */
-function f1_set_demo_phase(?string $phase): void
+function f1_set_demo_phase(?string $phase, array $overrides = []): void
 {
-    $GLOBALS['f1_demo_phase'] = in_array($phase, DEMO_PHASES, true) ? $phase : null;
+    $GLOBALS['f1_demo_phase']     = in_array($phase, DEMO_PHASES, true) ? $phase : null;
+    $GLOBALS['f1_demo_overrides'] = $overrides;
 }
 
 function f1_demo_phase(): ?string
@@ -37,7 +39,7 @@ function openf1_get(string $pathAndQuery, int $timeoutSeconds = 8): array
 {
     // Mode démo : réponses simulées, aucun appel réseau
     if (($demoPhase = f1_demo_phase()) !== null) {
-        return demo_openf1_get($pathAndQuery, $demoPhase);
+        return demo_openf1_get($pathAndQuery, $demoPhase, $GLOBALS['f1_demo_overrides'] ?? []);
     }
 
     $url = rtrim(OPENF1_BASE_URL, '/') . '/' . ltrim($pathAndQuery, '/');

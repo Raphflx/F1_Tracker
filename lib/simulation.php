@@ -38,6 +38,58 @@ function demo_phase_from_query(): ?string
 }
 
 /**
+ * Valeurs forçables depuis l'encart « Réglages de la démo » :
+ * nom du paramètre GET => [min, max] (entiers). Vide ou hors bornes → automatique.
+ */
+const DEMO_NUMERIC_OVERRIDES = [
+    'temp_piste' => [0, 70],     // °C
+    'temp_air'   => [-10, 50],   // °C
+    'humidite'   => [0, 100],    // %
+    'vent'       => [0, 100],    // km/h
+    'tour'       => [1, DEMO_TOTAL_LAPS],
+];
+
+/** États de piste forçables : valeur GET => [catégorie, drapeau, message] OpenF1. */
+const DEMO_TRACK_OVERRIDES = [
+    'vert'  => ['Flag',      'GREEN',  'TRACK CLEAR'],
+    'jaune' => ['Flag',      'YELLOW', 'YELLOW IN TRACK SECTOR 2'],
+    'sc'    => ['SafetyCar', null,     'SAFETY CAR DEPLOYED'],
+    'rouge' => ['Flag',      'RED',    'RED FLAG'],
+];
+
+/**
+ * Lit les valeurs forcées de l'URL (déjà validées). Ne renvoie que celles
+ * qui sont renseignées et valides ; le reste reste automatique.
+ */
+function demo_overrides_from_query(): array
+{
+    $overrides = [];
+
+    $piste = filter_input(INPUT_GET, 'piste');
+    if (is_string($piste) && isset(DEMO_TRACK_OVERRIDES[$piste])) {
+        $overrides['piste'] = $piste;
+    }
+
+    foreach (DEMO_NUMERIC_OVERRIDES as $name => [$min, $max]) {
+        $value = filter_input(INPUT_GET, $name, FILTER_VALIDATE_INT, ['options' => ['min_range' => $min, 'max_range' => $max]]);
+        if (is_int($value)) {
+            $overrides[$name] = $value;
+        }
+    }
+
+    return $overrides;
+}
+
+/**
+ * Paramètres d'URL du mode démo (phase + valeurs forcées), pour les liens
+ * et le polling JS. Construits uniquement à partir de valeurs validées.
+ */
+function demo_query_string(string $phase, array $overrides): string
+{
+    return http_build_query(['demo' => $phase] + $overrides);
+}
+
+/**
  * Bornes UTC (timestamps) de la session fictive selon la phase demandée.
  * - live     : en cours depuis 10 à 130 min (cycle de 2 h), jamais terminée
  * - upcoming : démarre à la prochaine demi-heure
@@ -64,7 +116,7 @@ function demo_lap_at(int $start, int $t): int
  * Point d'entrée : renvoie la réponse simulée d'un chemin OpenF1
  * ("sessions?year=2026", "weather?session_key=1", …).
  */
-function demo_openf1_get(string $pathAndQuery, string $phase): array
+function demo_openf1_get(string $pathAndQuery, string $phase, array $overrides = []): array
 {
     $endpoint = (string)parse_url('/' . ltrim($pathAndQuery, '/'), PHP_URL_PATH);
     parse_str((string)parse_url('/' . ltrim($pathAndQuery, '/'), PHP_URL_QUERY), $query);
@@ -78,10 +130,71 @@ function demo_openf1_get(string $pathAndQuery, string $phase): array
     return match (trim($endpoint, '/')) {
         'sessions'     => [demo_session($start, $end)],
         'meetings'     => [demo_meeting($start)],
-        'weather'      => $now >= $start ? demo_weather($start, $until) : [],
-        'race_control' => $now >= $start ? demo_race_control($start, $until, $query) : [],
+        'weather'      => demo_apply_weather_overrides(
+            $now >= $start ? demo_weather($start, $until) : [], $overrides, $until
+        ),
+        'race_control' => demo_apply_race_control_overrides(
+            $now >= $start ? demo_race_control($start, $until, $query) : [], $overrides, $start, $until
+        ),
         default        => [],
     };
+}
+
+/**
+ * Remplace les valeurs de la dernière mesure météo par les valeurs forcées
+ * (crée une mesure si la session n'a pas encore commencé).
+ */
+function demo_apply_weather_overrides(array $list, array $overrides, int $until): array
+{
+    $map = ['temp_piste' => 'track_temp', 'temp_air' => 'air_temp', 'humidite' => 'humidity', 'vent' => 'wind_speed'];
+    if (!array_intersect_key($overrides, $map)) {
+        return $list;
+    }
+
+    $last = $list ? array_pop($list) : ['session_key' => DEMO_SESSION_KEY, 'date' => demo_iso($until)];
+    foreach ($map as $param => $field) {
+        if (isset($overrides[$param])) {
+            // Le vent est saisi en km/h ; OpenF1 le fournit en m/s
+            $last[$field] = $param === 'vent' ? round($overrides[$param] / 3.6, 2) : $overrides[$param];
+        }
+    }
+    $list[] = $last;
+    return $list;
+}
+
+/**
+ * Applique l'état de piste et le tour forcés : plafonne les tours au tour
+ * choisi et ajoute un dernier message portant l'état de piste voulu.
+ */
+function demo_apply_race_control_overrides(array $events, array $overrides, int $start, int $until): array
+{
+    if (!isset($overrides['piste']) && !isset($overrides['tour'])) {
+        return $events;
+    }
+
+    $lap = $overrides['tour'] ?? null;
+    if ($lap !== null) {
+        foreach ($events as &$e) {
+            $e['lap_number'] = min((int)$e['lap_number'], $lap);
+        }
+        unset($e);
+    }
+
+    // Dernier message (le plus récent) : état de piste forcé, ou état actuel conservé
+    $last = $events ? $events[count($events) - 1] : null;
+    [$category, $flag, $message] = isset($overrides['piste'])
+        ? DEMO_TRACK_OVERRIDES[$overrides['piste']]
+        : [$last['category'] ?? 'Flag', $last['flag'] ?? 'GREEN', $last['message'] ?? 'TRACK CLEAR'];
+
+    $events[] = [
+        'session_key' => DEMO_SESSION_KEY,
+        'date'        => demo_iso(max($until, $start) + 1),
+        'category'    => $category,
+        'flag'        => $flag,
+        'message'     => $message,
+        'lap_number'  => $lap ?? ($last['lap_number'] ?? demo_lap_at($start, $until)),
+    ];
+    return $events;
 }
 
 function demo_iso(int $timestamp): string
