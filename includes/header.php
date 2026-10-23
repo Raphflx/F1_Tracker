@@ -37,6 +37,9 @@ function nav_active(string $page, string $section): string {
   <!-- Titre dynamique -->
   <title><?= htmlspecialchars($title, ENT_QUOTES) ?></title>
   <meta name="description" content="<?= htmlspecialchars($description, ENT_QUOTES) ?>">
+<?php if (!empty($pageNoIndex)): ?>
+  <meta name="robots" content="noindex">
+<?php endif; ?>
 
   <!-- Favicons : .ico (anciens navigateurs), SVG (navigateurs récents),
        icône Apple (écran d'accueil iOS) et manifest (Android / PWA) -->

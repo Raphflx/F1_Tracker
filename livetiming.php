@@ -15,7 +15,12 @@ require_once __DIR__ . '/lib/openf1.php';
 
 date_default_timezone_set('Europe/Paris');
 
-$pageTitle = 'Live timing – F1 Tracker';
+// Mode démo (?demo=1|live|upcoming|finished) : données simulées, pour tester sans GP réel
+$demoPhase = demo_phase_from_query();
+f1_set_demo_phase($demoPhase);
+
+$pageTitle = ($demoPhase ? 'Démo – ' : '') . 'Live timing – F1 Tracker';
+$pageNoIndex = $demoPhase !== null; // la démo n'a pas à apparaître sur Google
 require __DIR__ . '/includes/header.php';
 
 // ---------------------------------------------------------
@@ -67,6 +72,21 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
 ?>
 
 <a class="back-btn" href="index.php">← Retour à l’accueil</a>
+
+<?php if ($demoPhase): ?>
+  <!-- Bandeau mode démo -->
+  <div class="demo-banner" role="status">
+    <strong>Mode démo — données fictives.</strong>
+    Session simulée pour tester le live timing sans Grand Prix en cours.
+    <span class="demo-banner-links">
+      Phase :
+      <a href="livetiming.php?demo=upcoming"<?= $demoPhase === 'upcoming' ? ' aria-current="true"' : '' ?>>à venir</a>
+      <a href="livetiming.php?demo=live"<?= $demoPhase === 'live' ? ' aria-current="true"' : '' ?>>en cours</a>
+      <a href="livetiming.php?demo=finished"<?= $demoPhase === 'finished' ? ' aria-current="true"' : '' ?>>terminée</a>
+      · <a href="livetiming.php">Quitter la démo</a>
+    </span>
+  </div>
+<?php endif; ?>
 
 <?php if ($errorMessage): ?>
   <p class="error">⚠️ <?= htmlspecialchars($errorMessage, ENT_QUOTES) ?></p>
@@ -154,10 +174,17 @@ $lapsText = ($currentLap ? (string)$currentLap : '—') . '/' . ($totalLaps ? (s
     data-start="<?= $startParis ? (string)$startParis->getTimestamp() : '0' ?>"
     data-end="<?= $endParis ? (string)$endParis->getTimestamp() : '0' ?>"
     data-session-key="<?= $focusSession ? (int)$focusSession['session_key'] : '0' ?>"
+    data-demo="<?= htmlspecialchars($demoPhase ?? '', ENT_QUOTES) ?>"
   >
     Chargement…
   </div>
 </div>
+
+<?php if (!$demoPhase && $phase !== 'live'): ?>
+  <p class="demo-link">
+    Pas de session en cours ? <a href="livetiming.php?demo=1" rel="nofollow">Voir une démo avec des données fictives</a>
+  </p>
+<?php endif; ?>
 
 <script src="script/countdown.js"></script>
 <?php if ($phase !== 'finished' && $focusSession): ?>

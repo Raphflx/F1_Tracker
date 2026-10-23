@@ -5,6 +5,11 @@
   const sessionKey  = countdown ? parseInt(countdown.dataset.sessionKey, 10) : 0;
   if (!sessionKey) return;
 
+  // Mode démo : on garde le paramètre pour que l'API renvoie les données simulées
+  const demo = countdown.dataset.demo || '';
+  const url  = 'api/livetiming_status.php?session_key=' + sessionKey +
+               (demo ? '&demo=' + encodeURIComponent(demo) : '');
+
   const elLaps        = document.getElementById('lt-laps');
   const elTrackStatus = document.getElementById('lt-track-status');
   const elTrackTemp   = document.getElementById('lt-track-temp');
@@ -18,7 +23,7 @@
 
   async function refresh() {
     try {
-      const res = await fetch('api/livetiming_status.php?session_key=' + sessionKey);
+      const res = await fetch(url);
       if (!res.ok) return;
       const json = await res.json();
       if (json.error || !json.data) return;

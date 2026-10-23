@@ -690,6 +690,41 @@ tr:last-child td {
   text-align: center;
 }
 
+/* Mode démo (données fictives) */
+.demo-banner {
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  color: var(--text-2);
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.demo-banner-links {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+.demo-banner-links a {
+  color: var(--text-2);
+  margin: 0 0.2rem;
+}
+
+.demo-banner-links a[aria-current="true"] {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.demo-link {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
 /* -------------------------
    15) LIVE TIMING — TRACK STATUS BADGE
    ------------------------- */

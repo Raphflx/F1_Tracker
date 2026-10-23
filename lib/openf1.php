@@ -9,8 +9,24 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/datetime.php';
 require_once __DIR__ . '/text.php';
+require_once __DIR__ . '/simulation.php';
 
 const OPENF1_BASE_URL = 'https://api.openf1.org/v1';
+
+/**
+ * Mode démo : active ou désactive le simulateur pour la requête en cours.
+ * $phase : 'live' | 'upcoming' | 'finished', ou null pour les données réelles.
+ * Appelé uniquement par les pages / endpoints du live timing.
+ */
+function f1_set_demo_phase(?string $phase): void
+{
+    $GLOBALS['f1_demo_phase'] = in_array($phase, DEMO_PHASES, true) ? $phase : null;
+}
+
+function f1_demo_phase(): ?string
+{
+    return $GLOBALS['f1_demo_phase'] ?? null;
+}
 
 /**
  * Récupère une URL OpenF1 et renvoie un tableau PHP (JSON décodé).
@@ -19,6 +35,11 @@ const OPENF1_BASE_URL = 'https://api.openf1.org/v1';
  */
 function openf1_get(string $pathAndQuery, int $timeoutSeconds = 8): array
 {
+    // Mode démo : réponses simulées, aucun appel réseau
+    if (($demoPhase = f1_demo_phase()) !== null) {
+        return demo_openf1_get($pathAndQuery, $demoPhase);
+    }
+
     $url = rtrim(OPENF1_BASE_URL, '/') . '/' . ltrim($pathAndQuery, '/');
 
     $context = stream_context_create([
@@ -307,13 +328,14 @@ function f1_latest_weather(int $sessionKey): ?array
     usort($list, static fn($a, $b) => strtotime((string)$a['date']) <=> strtotime((string)$b['date']));
     $w = $list[count($list) - 1];
 
-    $round = static fn(string $k): ?int => isset($w[$k]) ? (int)round((float)$w[$k]) : null;
+    $round = static fn(string $k, float $factor = 1.0): ?int =>
+        isset($w[$k]) ? (int)round((float)$w[$k] * $factor) : null;
 
     return [
         'track_temp' => $round('track_temp'),
         'air_temp'   => $round('air_temp'),
         'humidity'   => $round('humidity'),
-        'wind_speed' => $round('wind_speed'),
+        'wind_speed' => $round('wind_speed', 3.6), // OpenF1 : m/s → km/h
     ];
 }
 
